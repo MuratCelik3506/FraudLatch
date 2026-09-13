@@ -2,12 +2,17 @@
 
 PYTHON ?= python3
 TERRAFORM ?= terraform
+VENV ?= .venv
+VENV_PYTHON := $(VENV)/bin/python
+VENV_RUFF := $(VENV)/bin/ruff
+VENV_MYPY := $(VENV)/bin/mypy
+VENV_PYTEST := $(VENV)/bin/pytest
 
 .PHONY: help setup lint format format-check typecheck test quality terraform-fmt terraform-validate
 
 help:
 	@printf '%s\n' \
-		'make setup               Install development dependencies' \
+		'make setup               Create .venv and install development dependencies' \
 		'make quality             Run formatting, linting, typing, and tests' \
 		'make format              Format Python code' \
 		'make format-check        Check Python formatting' \
@@ -18,23 +23,24 @@ help:
 		'make terraform-validate Validate Terraform roots when present'
 
 setup:
-	$(PYTHON) -m pip install --upgrade pip
-	$(PYTHON) -m pip install -e '.[dev]'
+	$(PYTHON) -m venv $(VENV)
+	$(VENV_PYTHON) -m pip install --upgrade pip
+	$(VENV_PYTHON) -m pip install -e '.[dev]'
 
 format:
-	ruff format .
+	$(VENV_RUFF) format .
 
 lint:
-	ruff check .
+	$(VENV_RUFF) check .
 
 format-check:
-	ruff format --check .
+	$(VENV_RUFF) format --check .
 
 typecheck:
-	mypy fraudlatch
+	$(VENV_MYPY) fraudlatch
 
 test:
-	pytest
+	$(VENV_PYTEST)
 
 quality: format-check lint typecheck test
 

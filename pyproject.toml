@@ -31,6 +31,9 @@ select = ["E", "F", "I", "UP", "B"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "--strict-markers --strict-config"
+markers = [
+  "integration: tests that require disposable infrastructure services",
+]
 
 [tool.mypy]
 python_version = "3.12"
