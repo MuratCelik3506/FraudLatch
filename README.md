@@ -1,6 +1,6 @@
-# FraudStream
+# FraudLatch
 
-FraudStream is a Terraform-first, event-driven fraud risk platform. It is designed to run locally with Docker and to be deployable to AWS without changing the application contract.
+FraudLatch is a Terraform-first, event-driven fraud risk platform. It is designed to run locally with Docker and to be deployable to AWS without changing the application contract.
 
 The repository is intentionally being built in small vertical slices. The current foundation contains the Python quality gates, local-development conventions, and CI contract. Application services, Terraform roots, and the BankSim replay pipeline will be added incrementally.
 
@@ -14,7 +14,7 @@ make setup
 make quality
 ```
 
-BankSim raw and processed data is excluded from Git. See `fraudstream_project_proposal.md` for the acquisition and preprocessing contract.
+BankSim raw and processed data is excluded from Git. See `fraudlatch_project_proposal.md` for the acquisition and preprocessing contract.
 
 ## Repository conventions
 
