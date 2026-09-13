@@ -17,6 +17,11 @@ make setup
 make quality
 ```
 
+`make setup` creates a repository-local `.venv` and installs the project with
+its development dependencies. The Make targets use that environment directly,
+so activating a shell environment is optional and the system Python remains
+unchanged.
+
 BankSim raw and processed data is excluded from Git. See [`milestones/00-proposal.md`](milestones/00-proposal.md), [`milestones/7.1.md`](milestones/7.1.md), and [`milestones/7.2.md`](milestones/7.2.md) for the acquisition and preprocessing contract.
 
 ## Dataset acquisition
