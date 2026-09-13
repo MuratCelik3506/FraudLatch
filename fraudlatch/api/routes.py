@@ -10,6 +10,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from fraudlatch.api.repository import (
+    create_outbox_event,
     create_transaction,
     get_transaction,
     matches_payload,
@@ -76,6 +77,7 @@ async def ingest_transaction(
 
     try:
         await create_transaction(session, payload)
+        await create_outbox_event(session, payload)
         await session.commit()
     except IntegrityError:
         await session.rollback()

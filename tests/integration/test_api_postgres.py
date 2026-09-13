@@ -2,8 +2,10 @@ import os
 
 import pytest
 from httpx import ASGITransport, AsyncClient
+from sqlalchemy import func, select
 
 from fraudlatch.api.app import create_app
+from fraudlatch.db.models import OutboxEvent
 
 pytestmark = pytest.mark.integration
 
@@ -34,6 +36,13 @@ async def test_ingestion_is_idempotent_and_detects_conflicts() -> None:
         conflict = await client.post("/v1/transactions", json=conflict_payload)
         queried = await client.get("/v1/transactions/txn-integration-1")
 
+    async with app.state.session_factory() as session:
+        outbox_count = await session.scalar(
+            select(func.count())
+            .select_from(OutboxEvent)
+            .where(OutboxEvent.aggregate_id == "txn-integration-1")
+        )
+
     assert accepted.status_code == 202
     assert accepted.json()["status"] == "accepted"
     assert duplicate.status_code == 202
@@ -41,3 +50,4 @@ async def test_ingestion_is_idempotent_and_detects_conflicts() -> None:
     assert conflict.status_code == 409
     assert queried.status_code == 200
     assert queried.json()["amount"] == "12.34"
+    assert outbox_count == 1

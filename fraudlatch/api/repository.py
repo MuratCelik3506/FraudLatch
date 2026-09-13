@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+from uuid import uuid4
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from fraudlatch.api.schemas import TransactionIn
-from fraudlatch.db.models import Transaction
+from fraudlatch.db.models import OutboxEvent, Transaction
 
 
 def transaction_values(transaction: TransactionIn) -> dict[str, object]:
@@ -31,6 +33,24 @@ async def create_transaction(session: AsyncSession, payload: TransactionIn) -> T
     session.add(transaction)
     await session.flush()
     return transaction
+
+
+async def create_outbox_event(session: AsyncSession, payload: TransactionIn) -> OutboxEvent:
+    """Persist the initial transaction-received event in the same DB transaction."""
+
+    event = OutboxEvent(
+        event_id=str(uuid4()),
+        event_type="transaction.received",
+        schema_version=1,
+        occurred_at=payload.event_time,
+        aggregate_id=payload.transaction_id,
+        payload=payload.model_dump(mode="json"),
+        status="pending",
+        attempts=0,
+    )
+    session.add(event)
+    await session.flush()
+    return event
 
 
 def matches_payload(existing: Transaction, payload: TransactionIn) -> bool:
