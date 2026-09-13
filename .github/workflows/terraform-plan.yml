@@ -1,0 +1,35 @@
+name: Terraform plan
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Terraform environment to plan
+        required: true
+        default: aws-dev
+        type: choice
+        options: [aws-dev]
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    environment: aws-dev
+    defaults:
+      run:
+        working-directory: infra/terraform/environments/aws-dev
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: '1.9.*'
+      - name: Configure AWS credentials with OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          aws-region: ${{ vars.AWS_REGION || 'eu-west-1' }}
+      - run: terraform init -input=false
+      - run: terraform plan -input=false -out=tfplan
