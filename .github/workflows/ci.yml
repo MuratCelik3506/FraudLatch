@@ -77,7 +77,7 @@ jobs:
       - uses: docker/setup-buildx-action@v3
       - name: Build API image when defined
         if: hashFiles('docker/api.Dockerfile') != ''
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: docker/api.Dockerfile
@@ -85,7 +85,7 @@ jobs:
           tags: fraudlatch/api:ci
       - name: Build worker image when defined
         if: hashFiles('docker/worker.Dockerfile') != ''
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: docker/worker.Dockerfile
