@@ -17,7 +17,7 @@ jobs:
     name: Python quality and tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
@@ -29,9 +29,9 @@ jobs:
       - name: Lint
         run: ruff check .
       - name: Type check
-        run: mypy fraudstream
+        run: mypy fraudlatch
       - name: Test
-        run: pytest --cov=fraudstream --cov-report=term-missing
+        run: pytest --cov=fraudlatch --cov-report=term-missing
 
   terraform:
     name: Terraform (${{ matrix.root }})
@@ -44,7 +44,7 @@ jobs:
           - infra/terraform/environments/aws-dev
           - infra/terraform/bootstrap/state
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: '1.9.*'
@@ -82,7 +82,7 @@ jobs:
           context: .
           file: docker/api.Dockerfile
           push: false
-          tags: fraudstream/api:ci
+          tags: fraudlatch/api:ci
       - name: Build worker image when defined
         if: hashFiles('docker/worker.Dockerfile') != ''
         uses: docker/build-push-action@v6
@@ -90,4 +90,4 @@ jobs:
           context: .
           file: docker/worker.Dockerfile
           push: false
-          tags: fraudstream/worker:ci
+          tags: fraudlatch/worker:ci

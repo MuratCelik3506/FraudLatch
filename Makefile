@@ -31,7 +31,7 @@ format-check:
 	ruff format --check .
 
 typecheck:
-	mypy fraudstream
+	mypy fraudlatch
 
 test:
 	pytest

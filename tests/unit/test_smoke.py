@@ -1,4 +1,4 @@
-from fraudstream import __version__
+from fraudlatch import __version__
 
 
 def test_package_has_version() -> None:
