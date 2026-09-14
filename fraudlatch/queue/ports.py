@@ -27,6 +27,7 @@ class QueueMessage(BaseModel):
     handle: MessageHandle
     event: EventEnvelope[Any]
     raw_payload: str = Field(min_length=1)
+    attempts: int = Field(default=1, ge=1)
 
 
 class QueuePort(Protocol):

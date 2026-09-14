@@ -159,6 +159,7 @@ class RedisStreamsQueue(QueuePort):
                         handle=MessageHandle(queue=self.stream_name, message_id=str(message_id)),
                         event=deserialize_event(raw_payload),
                         raw_payload=raw_payload,
+                        attempts=max(1, int(fields.get("attempts", 1))),
                     )
                 )
         return messages
