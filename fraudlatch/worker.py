@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import signal
-from collections.abc import Awaitable, Callable, Sequence
+from collections.abc import Awaitable, Callable
 from typing import Any, Protocol, cast
 
 from sqlalchemy import select
@@ -119,9 +119,13 @@ class WorkerLoop:
         """Stop intake on SIGTERM while allowing the current batch to finish."""
 
         while not stop_event.is_set():
-            messages: Sequence[QueueMessage] = await self.queue.consume(
-                consumer=self.consumer, count=1, block_ms=500
-            )
+            reclaim = getattr(self.queue, "reclaim_pending", None)
+            if reclaim is not None:
+                messages = await reclaim(consumer=self.consumer, min_idle_ms=1_000, count=1)
+            else:
+                messages = []
+            if not messages:
+                messages = await self.queue.consume(consumer=self.consumer, count=1, block_ms=500)
             for message in messages:
                 await self.processor.process(message)
                 if stop_event.is_set():

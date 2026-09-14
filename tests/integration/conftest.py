@@ -9,8 +9,8 @@ from collections.abc import Iterator
 from pathlib import Path
 
 import pytest
-from testcontainers.postgres import PostgresContainer
-from testcontainers.redis import RedisContainer
+from testcontainers.community.postgres import PostgresContainer
+from testcontainers.community.redis import RedisContainer
 
 
 @pytest.fixture(scope="session", autouse=True)
