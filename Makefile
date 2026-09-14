@@ -131,6 +131,6 @@ replay:
 	PYTHONPATH=. $(VENV_PYTHON) scripts/replay_banksim.py
 
 docker-build:
-	$(call require_target_file,Dockerfile,Dockerfile is not present; image packaging belongs to Milestone 9.4)
-	@echo "error: Docker image build configuration is not implemented yet; see Milestone 9.4" >&2
-	@exit 1
+	docker build -f docker/api.Dockerfile -t fraudlatch/api:local .
+	docker build -f docker/dispatcher.Dockerfile -t fraudlatch/dispatcher:local .
+	docker build -f docker/worker.Dockerfile -t fraudlatch/worker:local .

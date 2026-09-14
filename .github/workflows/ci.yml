@@ -91,3 +91,11 @@ jobs:
           file: docker/worker.Dockerfile
           push: false
           tags: fraudlatch/worker:ci
+      - name: Build dispatcher image when defined
+        if: hashFiles('docker/dispatcher.Dockerfile') != ''
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: docker/dispatcher.Dockerfile
+          push: false
+          tags: fraudlatch/dispatcher:ci
