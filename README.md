@@ -66,7 +66,7 @@ BankSim raw and processed data is excluded from Git. See [`milestones/00-proposa
 
 The BankSim CSV is a manual local prerequisite because the dataset is licensed and must not be committed or downloaded by CI.
 
-The validation target is available in Milestone 7.1; canonical preparation remains the next 7.2 step.
+Dataset validation and canonical preparation are available in Milestones 7.1–7.2; replay into the API is the next 7.3 step.
 
 1. Download the dataset from the [BankSim Kaggle page](https://www.kaggle.com/datasets/ealaxi/banksim1) and accept its `CC BY-NC-SA 4.0` terms for this non-commercial project.
 2. If Kaggle provides an archive, extract it locally and place only `bs140513_032310.csv` at `data/raw/bs140513_032310.csv`.
