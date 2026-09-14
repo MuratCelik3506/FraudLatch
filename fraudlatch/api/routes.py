@@ -47,6 +47,16 @@ async def health() -> dict[str, str]:
     return {"status": "ok"}
 
 
+@router.get("/metrics")
+async def metrics(request: Request) -> Response:
+    """Expose application metrics in Prometheus text format."""
+
+    return Response(
+        content=request.app.state.observability.exposition(),
+        media_type="text/plain; version=0.0.4",
+    )
+
+
 @router.get("/ready")
 async def ready(
     response: Response,
@@ -69,10 +79,13 @@ async def ready(
 )
 async def ingest_transaction(
     payload: TransactionIn,
+    request: Request,
     session: AsyncSession = Depends(get_session),  # noqa: B008
 ) -> TransactionAccepted:
     """Accept a transaction with database-authoritative idempotency."""
 
+    # Metrics intentionally do not contain transaction/customer IDs.
+    request.app.state.observability.received.inc()
     existing = await get_transaction(session, payload.transaction_id)
     if existing is not None:
         if matches_payload(existing, payload):
