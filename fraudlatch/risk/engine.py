@@ -37,6 +37,17 @@ def assess(
     category_weight = rules.category_risk_weights.get(transaction.category, Decimal("0"))
     if category_weight > 0:
         reasons.append(RiskReason(code="CATEGORY_RISK", contribution=category_weight))
+    baseline = active_context.amount_baseline
+    if (
+        baseline is not None
+        and baseline.sample_count >= rules.amount_deviation_min_samples
+        and baseline.dispersion > 0
+        and abs(transaction.amount - baseline.mean)
+        > baseline.dispersion * rules.amount_deviation_multiplier
+    ):
+        reasons.append(
+            RiskReason(code="AMOUNT_DEVIATION", contribution=rules.amount_deviation_weight)
+        )
 
     score = min(sum((reason.contribution for reason in reasons), Decimal("0")), Decimal("1"))
     score = score.quantize(SCORE_QUANTUM, rounding=ROUND_HALF_UP)

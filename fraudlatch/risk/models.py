@@ -8,7 +8,13 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-ReasonCode = Literal["HIGH_AMOUNT", "CUSTOMER_VELOCITY", "MERCHANT_VELOCITY", "CATEGORY_RISK"]
+ReasonCode = Literal[
+    "HIGH_AMOUNT",
+    "CUSTOMER_VELOCITY",
+    "MERCHANT_VELOCITY",
+    "CATEGORY_RISK",
+    "AMOUNT_DEVIATION",
+]
 RiskLevel = Literal["LOW", "MEDIUM", "HIGH"]
 
 
@@ -35,6 +41,16 @@ class RiskTransaction(BaseModel):
         return value
 
 
+class AmountBaseline(BaseModel):
+    """Deterministic customer amount statistics built from canonical history."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    mean: Decimal = Field(ge=0, max_digits=18, decimal_places=8)
+    dispersion: Decimal = Field(ge=0, max_digits=18, decimal_places=8)
+    sample_count: int = Field(ge=0)
+
+
 class RiskContext(BaseModel):
     """Optional live context supplied by providers such as Redis."""
 
@@ -44,6 +60,7 @@ class RiskContext(BaseModel):
     merchant_velocity: int = Field(default=0, ge=0)
     latest_customer_event_time: datetime | None = None
     latest_merchant_event_time: datetime | None = None
+    amount_baseline: AmountBaseline | None = None
 
     @field_validator("latest_customer_event_time", "latest_merchant_event_time")
     @classmethod
