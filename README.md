@@ -74,6 +74,7 @@ The validation target is available in Milestone 7.1; canonical preparation remai
 4. Run `make data-prepare`.
 
 Keep Kaggle credentials outside this repository. The validation command records the source hash and provenance metadata; it does not upload or fetch the raw file.
+Zero-amount source rows are preserved in the raw CSV but reported as skipped in the validation manifest because the API accepts only positive transaction amounts.
 
 ## Repository conventions
 

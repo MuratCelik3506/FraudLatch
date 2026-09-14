@@ -9,6 +9,7 @@ import hashlib
 import json
 import sys
 from collections import Counter
+from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Any
 
@@ -49,6 +50,7 @@ def validate_dataset(path: Path) -> dict[str, Any]:
 
         row_count = 0
         fraud_count = 0
+        skipped_rows: list[dict[str, Any]] = []
         duplicates: Counter[tuple[str, ...]] = Counter()
         for line_number, row in enumerate(reader, start=2):
             row_count += 1
@@ -67,12 +69,15 @@ def validate_dataset(path: Path) -> dict[str, Any]:
                     f"line {line_number}: step must be a non-negative integer"
                 ) from error
             try:
-                if float(amount) <= 0:
-                    raise ValueError
-            except ValueError as error:
+                numeric_amount = Decimal(amount)
+            except InvalidOperation as error:
                 raise DatasetValidationError(
-                    f"line {line_number}: amount must be a positive number"
+                    f"line {line_number}: amount must be a number"
                 ) from error
+            if numeric_amount < 0:
+                raise DatasetValidationError(f"line {line_number}: amount must not be negative")
+            if numeric_amount == 0:
+                skipped_rows.append({"line": line_number, "reason": "zero_amount"})
             if fraud not in {"0", "1"}:
                 raise DatasetValidationError(f"line {line_number}: fraud must be binary 0 or 1")
             fraud_count += fraud == "1"
@@ -85,6 +90,9 @@ def validate_dataset(path: Path) -> dict[str, Any]:
         "sha256": digest.hexdigest(),
         "row_count": row_count,
         "fraud_count": fraud_count,
+        "valid_row_count": row_count - len(skipped_rows),
+        "skipped_row_count": len(skipped_rows),
+        "skipped_rows": skipped_rows,
         "duplicate_rows": duplicate_rows,
         "required_columns": list(REQUIRED_COLUMNS),
     }
