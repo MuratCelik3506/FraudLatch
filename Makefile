@@ -13,7 +13,7 @@ export APP_ENV LOG_LEVEL DATABASE_URL REDIS_URL QUEUE_BACKEND
 
 .PHONY: help setup lint format format-check typecheck test quality \
 	terraform-fmt terraform-validate infra-init infra-plan infra-up infra-down \
-	data-check data-prepare api dispatcher worker replay docker-build
+data-check data-prepare api dispatcher worker replay docker-build
 
 INFRA_ROOT := infra/terraform/local
 DATASET := data/raw/bs140513_032310.csv
@@ -110,8 +110,7 @@ data-check:
 	$(VENV_PYTHON) scripts/validate_dataset.py $(DATASET)
 
 data-prepare:
-	@echo "error: data preparation is not implemented yet; see Milestone 7.2" >&2
-	@exit 1
+	PYTHONPATH=. $(VENV_PYTHON) scripts/prepare_banksim.py $(DATASET)
 
 api:
 	$(call require_env,DATABASE_URL)
