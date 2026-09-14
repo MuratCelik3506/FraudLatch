@@ -40,8 +40,16 @@ async def test_submit_dispatch_process_and_query_risk() -> None:
     try:
         async with session_factory() as session:
             await OutboxDispatcher(session_factory, queue).dispatch_once()
-            messages = await queue.consume(consumer="e2e-1", count=1, block_ms=1000)
-            assert len(messages) == 1
+            messages = await queue.consume(consumer="e2e-1", count=100, block_ms=1000)
+            message = next(
+                (
+                    candidate
+                    for candidate in messages
+                    if candidate.event.aggregate_id == transaction_id
+                ),
+                None,
+            )
+            assert message is not None
             store = DatabaseWorkerStore(session)
             velocity = VelocityContextProvider(redis)
 
@@ -52,7 +60,7 @@ async def test_submit_dispatch_process_and_query_risk() -> None:
                 )
 
             processor = WorkerProcessor(queue, store, calculate, RedisRetryHandler(redis))  # type: ignore[arg-type]
-            assert await processor.process(messages[0])
+            assert await processor.process(message)
             await session.commit()
 
         async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:

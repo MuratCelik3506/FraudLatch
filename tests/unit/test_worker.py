@@ -15,6 +15,9 @@ class FakeQueue:
     async def consume(self, **_: Any) -> list[QueueMessage]:
         return []
 
+    async def reclaim_pending(self, **_: Any) -> list[QueueMessage]:
+        return []
+
     async def ack(self, handle: MessageHandle) -> None:
         self.acks.append(handle.message_id)
 
@@ -125,5 +128,37 @@ def test_worker_loop_stops_without_intake_after_shutdown() -> None:
         loop = WorkerLoop(queue, object(), consumer="worker-1")  # type: ignore[arg-type]
         await loop.run(stop)
         assert queue.acks == []
+
+    asyncio.run(exercise())
+
+
+def test_worker_loop_reclaims_pending_messages_before_new_intake() -> None:
+    async def exercise() -> None:
+        class ReclaimQueue(FakeQueue):
+            def __init__(self) -> None:
+                super().__init__()
+                self.reclaimed = False
+                self.consumed = False
+
+            async def reclaim_pending(self, **_: Any) -> list[QueueMessage]:
+                self.reclaimed = True
+                return [make_message()]
+
+            async def consume(self, **_: Any) -> list[QueueMessage]:
+                self.consumed = True
+                raise AssertionError("new intake must wait until reclaimed work is handled")
+
+        queue = ReclaimQueue()
+        store, retry = FakeStore(), FakeRetry()
+        stop = asyncio.Event()
+
+        async def handler(_: Any) -> None:
+            stop.set()
+
+        processor = WorkerProcessor(queue, store, handler, retry)  # type: ignore[arg-type]
+        await WorkerLoop(queue, processor, consumer="worker-1").run(stop)
+        assert queue.reclaimed is True
+        assert queue.consumed is False
+        assert queue.acks == ["1-0"]
 
     asyncio.run(exercise())
