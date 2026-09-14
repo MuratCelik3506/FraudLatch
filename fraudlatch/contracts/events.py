@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from datetime import datetime
 from decimal import Decimal
 from typing import Any, ClassVar
@@ -71,3 +72,22 @@ class EventEnvelope[T: BaseModel](BaseModel):
         if supported is None or self.schema_version not in supported:
             raise UnsupportedEventVersionError(self.event_type, self.schema_version)
         return self
+
+
+def serialize_event(event: EventEnvelope[BaseModel]) -> str:
+    """Serialize an event without losing its versioned payload."""
+
+    return event.model_dump_json()
+
+
+def deserialize_event(raw_payload: str) -> EventEnvelope[Any]:
+    """Deserialize a supported event using its registered payload model."""
+
+    event_data = json.loads(raw_payload)
+    if not isinstance(event_data, dict):
+        raise ValueError("invalid_event_payload: expected an object")
+    event_type = event_data.get("event_type")
+    schema_version = event_data.get("schema_version")
+    if event_type == "transaction.received" and schema_version == 1:
+        return EventEnvelope[TransactionReceivedPayload].model_validate_json(raw_payload)
+    raise UnsupportedEventVersionError(str(event_type), int(schema_version or 0))
