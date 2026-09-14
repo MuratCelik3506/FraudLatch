@@ -42,6 +42,15 @@ class RiskContext(BaseModel):
 
     customer_velocity: int = Field(default=0, ge=0)
     merchant_velocity: int = Field(default=0, ge=0)
+    latest_customer_event_time: datetime | None = None
+    latest_merchant_event_time: datetime | None = None
+
+    @field_validator("latest_customer_event_time", "latest_merchant_event_time")
+    @classmethod
+    def require_context_timezone(cls, value: datetime | None) -> datetime | None:
+        if value is not None and (value.tzinfo is None or value.utcoffset() is None):
+            raise ValueError("context event times must be timezone-aware")
+        return value
 
 
 class RiskReason(BaseModel):
