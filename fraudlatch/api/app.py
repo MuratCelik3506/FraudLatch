@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 
 from fraudlatch.api.routes import router
 from fraudlatch.db.config import get_database_url
+from fraudlatch.observability import Observability
 
 
 def create_app(
@@ -30,5 +31,6 @@ def create_app(
 
     app = FastAPI(title="FraudLatch API", version="0.1.0", lifespan=lifespan)
     app.state.session_factory = session_factory
+    app.state.observability = Observability()
     app.include_router(router)
     return app
