@@ -4,6 +4,14 @@ from fraudlatch.contracts.events import (
     EventEnvelope,
     TransactionReceivedPayload,
     UnsupportedEventVersionError,
+    deserialize_event,
+    serialize_event,
 )
 
-__all__ = ["EventEnvelope", "TransactionReceivedPayload", "UnsupportedEventVersionError"]
+__all__ = [
+    "EventEnvelope",
+    "TransactionReceivedPayload",
+    "UnsupportedEventVersionError",
+    "deserialize_event",
+    "serialize_event",
+]
