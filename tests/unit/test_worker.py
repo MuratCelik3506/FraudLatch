@@ -53,17 +53,26 @@ class FakeRetry:
 
 def make_message() -> QueueMessage:
     event = EventEnvelope[TransactionReceivedPayload](
-        event_id=uuid4(), event_type="transaction.received", schema_version=1,
-        occurred_at="2026-01-01T00:00:00Z", aggregate_id="txn-1",
+        event_id=uuid4(),
+        event_type="transaction.received",
+        schema_version=1,
+        occurred_at="2026-01-01T00:00:00Z",
+        aggregate_id="txn-1",
         payload=TransactionReceivedPayload(
-            transaction_id="txn-1", customer_id="c", merchant_id="m",
-            category="cat", amount="10.00", source_step=1,
+            transaction_id="txn-1",
+            customer_id="c",
+            merchant_id="m",
+            category="cat",
+            amount="10.00",
+            source_step=1,
             event_time="2026-01-01T00:00:00Z",
         ),
     )
     return QueueMessage(
         handle=MessageHandle(queue="q", message_id="1-0"),
-        event=event, raw_payload=event.model_dump_json(), attempts=2,
+        event=event,
+        raw_payload=event.model_dump_json(),
+        attempts=2,
     )
 
 

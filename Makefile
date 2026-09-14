@@ -73,7 +73,7 @@ typecheck:
 	$(VENV_MYPY) fraudlatch
 
 test:
-	$(VENV_PYTEST)
+	PYTHONPATH=. $(VENV_PYTEST)
 
 quality: format-check lint typecheck test
 
@@ -107,9 +107,7 @@ infra-down:
 	$(TERRAFORM) -chdir=$(INFRA_ROOT) destroy -input=false
 
 data-check:
-	$(call require_target_file,$(DATASET),$(DATASET) is missing; acquire BankSim manually before running this command)
-	@echo "error: dataset validation is not implemented yet; see Milestone 7.1" >&2
-	@exit 1
+	$(VENV_PYTHON) scripts/validate_dataset.py $(DATASET)
 
 data-prepare:
 	@echo "error: data preparation is not implemented yet; see Milestone 7.2" >&2
