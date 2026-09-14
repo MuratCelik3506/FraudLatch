@@ -44,4 +44,4 @@ def test_makefile_keeps_future_commands_explicitly_unimplemented() -> None:
     assert "scripts/prepare_banksim.py" in makefile
     assert "$(VENV_PYTHON) -m fraudlatch.dispatcher" in makefile
     assert "worker is not implemented yet" in makefile
-    assert "replay is not implemented yet" in makefile
+    assert "scripts/replay_banksim.py" in makefile
