@@ -29,12 +29,23 @@ def test_valid_file_returns_hash_counts_and_duplicate_report(tmp_path: Path) -> 
     assert len(manifest["sha256"]) == 64
 
 
+def test_zero_amount_is_reported_as_skipped_without_failing(tmp_path: Path) -> None:
+    path = tmp_path / "bank.csv"
+    zero = ["15", "c-zero", "m", "cat", "0.0", "0"]
+    write_csv(path, [valid_row(), zero])
+    manifest = validate_dataset(path)
+    assert manifest["row_count"] == 2
+    assert manifest["valid_row_count"] == 1
+    assert manifest["skipped_row_count"] == 1
+    assert manifest["skipped_rows"] == [{"line": 3, "reason": "zero_amount"}]
+
+
 @pytest.mark.parametrize(
     ("rows", "header", "message"),
     [
         ([], ["step", "customer"], "missing required columns"),
         ([["1", "", "m", "cat", "1", "0"]], None, "cannot be null"),
-        ([["1", "c", "m", "cat", "-1", "0"]], None, "positive number"),
+        ([["1", "c", "m", "cat", "-1", "0"]], None, "must not be negative"),
         ([["1", "c", "m", "cat", "1", "yes"]], None, "binary 0 or 1"),
     ],
 )
