@@ -113,9 +113,7 @@ async def query_transaction(
     return TransactionResponse.model_validate(transaction)
 
 
-@router.get(
-    "/v1/transactions/{transaction_id}/risk", response_model=RiskAssessmentResponse
-)
+@router.get("/v1/transactions/{transaction_id}/risk", response_model=RiskAssessmentResponse)
 async def query_risk(
     transaction_id: str,
     response: Response,

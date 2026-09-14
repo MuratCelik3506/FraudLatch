@@ -27,7 +27,7 @@ dev = [
 ]
 
 [tool.setuptools.packages.find]
-include = ["fraudlatch*"]
+include = ["fraudlatch*", "scripts*"]
 
 [tool.ruff]
 line-length = 100
