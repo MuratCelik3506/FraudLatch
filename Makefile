@@ -128,10 +128,7 @@ worker:
 	@exit 1
 
 replay:
-	$(call require_env,DATABASE_URL)
-	$(call require_env,REDIS_URL)
-	@echo "error: replay is not implemented yet; see Milestone 7.3" >&2
-	@exit 1
+	PYTHONPATH=. $(VENV_PYTHON) scripts/replay_banksim.py
 
 docker-build:
 	$(call require_target_file,Dockerfile,Dockerfile is not present; image packaging belongs to Milestone 9.4)
