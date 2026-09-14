@@ -1,0 +1,13 @@
+{
+  "title": "FraudLatch Overview",
+  "schemaVersion": 39,
+  "refresh": "15s",
+  "panels": [
+    {"type": "stat", "title": "Transactions received", "targets": [{"expr": "fraudlatch_transactions_received_total"}]},
+    {"type": "stat", "title": "Transactions processed", "targets": [{"expr": "fraudlatch_transactions_processed_total"}]},
+    {"type": "stat", "title": "Processing failures", "targets": [{"expr": "fraudlatch_processing_failures_total"}]},
+    {"type": "stat", "title": "Outbox pending", "targets": [{"expr": "fraudlatch_outbox_pending_total"}]},
+    {"type": "stat", "title": "DLQ messages", "targets": [{"expr": "fraudlatch_dlq_messages_total"}]},
+    {"type": "timeseries", "title": "Processing latency", "targets": [{"expr": "rate(fraudlatch_processing_duration_seconds_sum[5m]) / rate(fraudlatch_processing_duration_seconds_count[5m])"}]}
+  ]
+}
