@@ -7,6 +7,14 @@ from fraudlatch.queue.redis import (
     create_redis_client,
     get_redis_url,
 )
+from fraudlatch.queue.retry import (
+    PermanentProcessingError,
+    RedisRetryHandler,
+    RetryDecision,
+    RetryPolicy,
+    TransientProcessingError,
+    classify_processing_error,
+)
 
 __all__ = [
     "MessageHandle",
@@ -16,4 +24,10 @@ __all__ = [
     "RedisStreamsQueue",
     "create_redis_client",
     "get_redis_url",
+    "PermanentProcessingError",
+    "RedisRetryHandler",
+    "RetryDecision",
+    "RetryPolicy",
+    "TransientProcessingError",
+    "classify_processing_error",
 ]
