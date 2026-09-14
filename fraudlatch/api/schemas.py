@@ -44,3 +44,27 @@ class TransactionAccepted(BaseModel):
 
     transaction_id: str
     status: str
+
+
+class RiskAssessmentResponse(BaseModel):
+    """Public representation of the current risk assessment."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    transaction_id: str
+    status: str
+    score: Decimal | None = None
+    level: str | None = None
+    reasons: list[dict[str, Any]] | None = None
+    engine_version: str | None = None
+    attempts: int
+    error_code: str | None = None
+    updated_at: datetime
+
+
+class HighRiskResponse(BaseModel):
+    """Bounded page of high-risk assessments."""
+
+    items: list[RiskAssessmentResponse]
+    limit: int
+    offset: int
