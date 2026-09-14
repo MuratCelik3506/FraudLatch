@@ -55,8 +55,10 @@ make docker-build       Build local release/demo images
 `infra-down` is explicitly destructive and is never run automatically. The
 infrastructure, data pipeline, dispatcher, worker, replay, and Docker image
 commands fail with a milestone-specific message until their implementation is
-available. No command downloads BankSim, creates cloud resources, or fetches
-credentials automatically.
+available. The dispatcher is available once PostgreSQL and Redis are running;
+the worker, replay, and Docker image commands remain milestone-gated. No
+command downloads BankSim, creates cloud resources, or fetches credentials
+automatically.
 
 BankSim raw and processed data is excluded from Git. See [`milestones/00-proposal.md`](milestones/00-proposal.md), [`milestones/7.1.md`](milestones/7.1.md), and [`milestones/7.2.md`](milestones/7.2.md) for the acquisition and preprocessing contract.
 

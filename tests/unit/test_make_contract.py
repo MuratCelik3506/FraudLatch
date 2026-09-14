@@ -42,6 +42,6 @@ def test_makefile_keeps_future_commands_explicitly_unimplemented() -> None:
     assert "export APP_ENV LOG_LEVEL DATABASE_URL REDIS_URL QUEUE_BACKEND" in makefile
     assert "does not fetch" not in makefile
     assert "data preparation is not implemented yet" in makefile
-    assert "dispatcher is not implemented yet" in makefile
+    assert "$(VENV_PYTHON) -m fraudlatch.dispatcher" in makefile
     assert "worker is not implemented yet" in makefile
     assert "replay is not implemented yet" in makefile
