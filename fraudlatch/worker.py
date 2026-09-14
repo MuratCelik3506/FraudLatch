@@ -4,12 +4,27 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import signal
 from collections.abc import Awaitable, Callable, Sequence
-from typing import Any, Protocol
+from typing import Any, Protocol, cast
 
-from fraudlatch.contracts import EventEnvelope
-from fraudlatch.queue import QueueMessage, QueuePort, RedisRetryHandler
+from sqlalchemy import select
+
+from fraudlatch.api.risk_repository import persist_risk_result
+from fraudlatch.contracts import EventEnvelope, TransactionReceivedPayload
+from fraudlatch.db.models import RiskAssessment, Transaction
+from fraudlatch.db.session import create_session_factory
+from fraudlatch.queue import (
+    QueueMessage,
+    QueuePort,
+    RedisRetryHandler,
+    RedisStreamsQueue,
+    create_redis_client,
+)
 from fraudlatch.queue.retry import PermanentProcessingError
+from fraudlatch.risk import assess
+from fraudlatch.risk.models import RiskDecision, RiskTransaction
+from fraudlatch.risk.velocity import VelocityContextProvider
 
 logger = logging.getLogger(__name__)
 
@@ -27,8 +42,12 @@ class WorkerStore(Protocol):
 
     async def rollback(self) -> None: ...
 
+    async def persist_decision(
+        self, transaction_id: str, event_id: str, attempt: int, decision: RiskDecision
+    ) -> None: ...
 
-RiskHandler = Callable[[EventEnvelope[Any]], Awaitable[None]]
+
+RiskHandler = Callable[[EventEnvelope[Any]], Awaitable[RiskDecision | None]]
 
 
 class WorkerProcessor:
@@ -64,7 +83,14 @@ class WorkerProcessor:
             # visible after restart and can be reclaimed by the next consumer.
             await self.store.mark_processing(transaction_id, message.attempts)
             await self.store.commit()
-            await self.risk_handler(event)
+            decision = await self.risk_handler(event)
+            if decision is not None:
+                await self.store.persist_decision(
+                    transaction_id=transaction_id,
+                    event_id=f"{event.event_id}:{message.attempts}",
+                    attempt=message.attempts,
+                    decision=decision,
+                )
             await self.store.commit()
         except Exception as error:
             await self.store.rollback()
@@ -100,3 +126,90 @@ class WorkerLoop:
                 await self.processor.process(message)
                 if stop_event.is_set():
                     return
+
+
+class DatabaseWorkerStore:
+    """PostgreSQL-backed worker store used by the executable worker."""
+
+    def __init__(self, session: Any) -> None:
+        self.session = session
+
+    async def transaction_exists(self, transaction_id: str) -> bool:
+        result = await self.session.execute(
+            select(Transaction.transaction_id).where(Transaction.transaction_id == transaction_id)
+        )
+        return result.scalar_one_or_none() is not None
+
+    async def assessment_status(self, transaction_id: str) -> str | None:
+        result = await self.session.execute(
+            select(RiskAssessment.status).where(RiskAssessment.transaction_id == transaction_id)
+        )
+        return cast(str | None, result.scalar_one_or_none())
+
+    async def mark_processing(self, transaction_id: str, attempt: int) -> None:
+        result = await self.session.execute(
+            select(RiskAssessment).where(RiskAssessment.transaction_id == transaction_id)
+        )
+        assessment = result.scalar_one_or_none()
+        if assessment is None:
+            self.session.add(
+                RiskAssessment(transaction_id=transaction_id, status="processing", attempts=attempt)
+            )
+        else:
+            assessment.status = "processing"
+            assessment.attempts = attempt
+        await self.session.flush()
+
+    async def persist_decision(
+        self, transaction_id: str, event_id: str, attempt: int, decision: RiskDecision
+    ) -> None:
+        await persist_risk_result(
+            self.session,
+            transaction_id=transaction_id,
+            event_id=event_id,
+            attempt=attempt,
+            decision=decision,
+        )
+
+    async def commit(self) -> None:
+        await self.session.commit()
+
+    async def rollback(self) -> None:
+        await self.session.rollback()
+
+
+async def main() -> None:
+    """Run the PostgreSQL/Redis-backed risk worker until SIGTERM."""
+
+    client = create_redis_client()
+    queue = RedisStreamsQueue(client)
+    session_factory = create_session_factory()
+    context_provider = VelocityContextProvider(client)
+    stop_event = asyncio.Event()
+    loop = asyncio.get_running_loop()
+    for sig in (signal.SIGINT, signal.SIGTERM):
+        loop.add_signal_handler(sig, stop_event.set)
+
+    async def calculate(event: EventEnvelope[Any]) -> RiskDecision:
+        transaction = RiskTransaction.model_validate(
+            TransactionReceivedPayload.model_validate(event.payload).model_dump()
+        )
+        context = await context_provider.get_context(transaction)
+        return assess(transaction, context)
+
+    try:
+        async with session_factory() as session:
+            store = DatabaseWorkerStore(session)
+            processor = WorkerProcessor(
+                queue,
+                store,
+                calculate,
+                RedisRetryHandler(client),
+            )
+            await WorkerLoop(queue, processor, consumer="worker-1").run(stop_event)
+    finally:
+        await client.aclose()
+
+
+if __name__ == "__main__":
+    asyncio.run(main())

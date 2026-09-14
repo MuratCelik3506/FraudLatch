@@ -42,6 +42,9 @@ class FakeStore:
     async def rollback(self) -> None:
         self.actions.append("rollback")
 
+    async def persist_decision(self, **_: Any) -> None:
+        self.actions.append("persist")
+
 
 class FakeRetry:
     def __init__(self) -> None:
