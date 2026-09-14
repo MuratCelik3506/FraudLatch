@@ -1,0 +1,10 @@
+.env
+.git
+.gitignore
+.venv
+data/raw
+data/processed
+infra/terraform/.terraform
+**/__pycache__
+*.pyc
+reports
