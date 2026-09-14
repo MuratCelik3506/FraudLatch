@@ -122,8 +122,7 @@ api:
 dispatcher:
 	$(call require_env,DATABASE_URL)
 	$(call require_env,REDIS_URL)
-	@echo "error: dispatcher is not implemented yet; see Milestone 3.2" >&2
-	@exit 1
+	$(VENV_PYTHON) -m fraudlatch.dispatcher
 
 worker:
 	$(call require_env,DATABASE_URL)
