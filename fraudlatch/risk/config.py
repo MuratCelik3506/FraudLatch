@@ -20,6 +20,9 @@ class RulesConfig(BaseModel):
     high_amount_weight: Decimal = Field(default=Decimal("0.35"), ge=0, le=1)
     customer_velocity_weight: Decimal = Field(default=Decimal("0.25"), ge=0, le=1)
     merchant_velocity_weight: Decimal = Field(default=Decimal("0.20"), ge=0, le=1)
+    amount_deviation_multiplier: Decimal = Field(default=Decimal("3"), gt=0)
+    amount_deviation_weight: Decimal = Field(default=Decimal("0.20"), ge=0, le=1)
+    amount_deviation_min_samples: int = Field(default=2, ge=2)
 
     @field_validator("category_amount_thresholds")
     @classmethod
