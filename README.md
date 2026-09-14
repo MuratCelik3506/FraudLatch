@@ -22,6 +22,42 @@ its development dependencies. The Make targets use that environment directly,
 so activating a shell environment is optional and the system Python remains
 unchanged.
 
+## Make command contract
+
+Run commands from the repository root. Service commands use `.venv` directly;
+the Makefile loads `.env` when present. Copy `.env.example` to `.env` first and
+provide a reachable PostgreSQL instance for `make api`. The API listens on
+`127.0.0.1:8000`.
+
+```text
+make setup              Create the local virtual environment
+make quality            Run format, lint, type checks, and tests
+make format             Format Python code
+make format-check       Check Python formatting
+make lint               Run Ruff lint checks
+make typecheck          Run mypy
+make test               Run pytest
+make terraform-fmt      Check Terraform formatting
+make terraform-validate Validate available Terraform roots
+make infra-init         Initialize local Terraform infrastructure
+make infra-plan         Plan local Terraform infrastructure
+make infra-up           Apply local Terraform infrastructure
+make infra-down         Destroy local Terraform infrastructure
+make data-check         Validate manually acquired BankSim data
+make data-prepare       Prepare canonical BankSim data
+make api                Run the API locally
+make dispatcher         Run the outbox dispatcher locally
+make worker             Run the risk worker locally
+make replay             Replay canonical transactions locally
+make docker-build       Build local release/demo images
+```
+
+`infra-down` is explicitly destructive and is never run automatically. The
+infrastructure, data pipeline, dispatcher, worker, replay, and Docker image
+commands fail with a milestone-specific message until their implementation is
+available. No command downloads BankSim, creates cloud resources, or fetches
+credentials automatically.
+
 BankSim raw and processed data is excluded from Git. See [`milestones/00-proposal.md`](milestones/00-proposal.md), [`milestones/7.1.md`](milestones/7.1.md), and [`milestones/7.2.md`](milestones/7.2.md) for the acquisition and preprocessing contract.
 
 ## Dataset acquisition
