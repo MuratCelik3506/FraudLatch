@@ -12,8 +12,13 @@ resource "docker_container" "prometheus" {
   name  = "${var.project_name}-${var.environment}-prometheus"
   image = docker_image.prometheus.image_id
 
-  networks_advanced { name = docker_network.app.name }
-  ports { internal = 9090 external = 9090 }
+  networks_advanced {
+    name = docker_network.app.name
+  }
+  ports {
+    internal = 9090
+    external = 9090
+  }
   volumes {
     volume_name    = docker_volume.prometheus.name
     container_path = "/prometheus"
@@ -36,8 +41,13 @@ resource "docker_container" "grafana" {
   name  = "${var.project_name}-${var.environment}-grafana"
   image = docker_image.grafana.image_id
 
-  networks_advanced { name = docker_network.app.name }
-  ports { internal = 3000 external = 3000 }
+  networks_advanced {
+    name = docker_network.app.name
+  }
+  ports {
+    internal = 3000
+    external = 3000
+  }
   volumes {
     volume_name    = docker_volume.grafana.name
     container_path = "/var/lib/grafana"
