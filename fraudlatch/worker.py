@@ -100,4 +100,3 @@ class WorkerLoop:
                 await self.processor.process(message)
                 if stop_event.is_set():
                     return
-

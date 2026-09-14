@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import AsyncIterator
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
-from sqlalchemy import text
+from sqlalchemy import desc, select, text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -15,7 +15,15 @@ from fraudlatch.api.repository import (
     get_transaction,
     matches_payload,
 )
-from fraudlatch.api.schemas import TransactionAccepted, TransactionIn, TransactionResponse
+from fraudlatch.api.risk_repository import get_risk_assessment
+from fraudlatch.api.schemas import (
+    HighRiskResponse,
+    RiskAssessmentResponse,
+    TransactionAccepted,
+    TransactionIn,
+    TransactionResponse,
+)
+from fraudlatch.db.models import RiskAssessment
 
 router = APIRouter()
 
@@ -103,3 +111,42 @@ async def query_transaction(
     if transaction is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="transaction not found")
     return TransactionResponse.model_validate(transaction)
+
+
+@router.get(
+    "/v1/transactions/{transaction_id}/risk", response_model=RiskAssessmentResponse
+)
+async def query_risk(
+    transaction_id: str,
+    response: Response,
+    session: AsyncSession = Depends(get_session),  # noqa: B008
+) -> RiskAssessmentResponse:
+    """Return current risk state, including pending/processing as 202."""
+
+    assessment = await get_risk_assessment(session, transaction_id)
+    if assessment is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="risk not found")
+    if assessment.status in {"pending", "processing"}:
+        response.status_code = status.HTTP_202_ACCEPTED
+    return RiskAssessmentResponse.model_validate(assessment)
+
+
+@router.get("/v1/risks/high", response_model=HighRiskResponse)
+async def query_high_risk(
+    limit: int = 50,
+    offset: int = 0,
+    session: AsyncSession = Depends(get_session),  # noqa: B008
+) -> HighRiskResponse:
+    """Return a deterministic, bounded page of high-risk results."""
+
+    if not 1 <= limit <= 100 or offset < 0:
+        raise HTTPException(status_code=400, detail="limit must be 1..100 and offset non-negative")
+    result = await session.execute(
+        select(RiskAssessment)
+        .where(RiskAssessment.level == "HIGH", RiskAssessment.status == "completed")
+        .order_by(desc(RiskAssessment.score), RiskAssessment.transaction_id)
+        .offset(offset)
+        .limit(limit)
+    )
+    items = [RiskAssessmentResponse.model_validate(item) for item in result.scalars().all()]
+    return HighRiskResponse(items=items, limit=limit, offset=offset)
